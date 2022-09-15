@@ -11,9 +11,20 @@ import torch.distributed as dist
 from ...ops.iou3d_nms import iou3d_nms_utils
 from ...utils import box_utils, common_utils, calibration_kitti
 from pcdet.datasets.kitti.kitti_object_eval_python import kitti_common
-
+import mmengine
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        '../data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        './data/kitti/':
+            's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+    }))
 class DataBaseSampler(object):
     def __init__(self, root_path, sampler_cfg, class_names, logger=None):
+        self.fileclient = mmengine.FileClient(**file_client_args)
         self.root_path = root_path
         self.class_names = class_names
         self.sampler_cfg = sampler_cfg
@@ -392,11 +403,13 @@ class DataBaseSampler(object):
             else:
                 file_path = self.root_path / info['path']
 
-                obj_points = np.fromfile(str(file_path), dtype=np.float32).reshape(
+                points_bytes = self.fileclient.get(str(file_path))
+                obj_points = np.frombuffer(points_bytes, dtype=np.float32).reshape(
                     [-1, self.sampler_cfg.NUM_POINT_FEATURES])
                 if obj_points.shape[0] != info['num_points_in_gt']:
-                    obj_points = np.fromfile(str(file_path), dtype=np.float64).reshape(-1, self.sampler_cfg.NUM_POINT_FEATURES)
-
+                    points_bytes = self.fileclient.get(str(file_path))
+                    obj_points = np.frombuffer(points_bytes, dtype=np.float64).reshape(-1,
+                                                                                       self.sampler_cfg.NUM_POINT_FEATURES)
             assert obj_points.shape[0] == info['num_points_in_gt']
             obj_points[:, :3] += info['box3d_lidar'][:3].astype(np.float32)
 
