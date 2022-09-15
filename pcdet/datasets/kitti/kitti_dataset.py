@@ -14,6 +14,8 @@ file_client_args = dict(
     path_mapping=dict({
         '../data/kitti/':
         's3://openmmlab/datasets/detection3d/kitti/',
+        './data/kitti/':
+            's3://openmmlab/datasets/detection3d/kitti/',
         'data/kitti/':
         's3://openmmlab/datasets/detection3d/kitti/',
     }))
