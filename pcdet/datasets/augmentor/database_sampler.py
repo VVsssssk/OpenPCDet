@@ -401,7 +401,8 @@ class DataBaseSampler(object):
                 start_offset, end_offset = info['global_data_offset']
                 obj_points = copy.deepcopy(gt_database_data[start_offset:end_offset])
             else:
-                file_path = self.root_path / info['path']
+                file_path = info['path'].split('/')[0] + '/' + info['path'].split('/')[1].lstrip('0')
+                file_path = self.root_path / file_path
 
                 points_bytes = self.fileclient.get(str(file_path))
                 obj_points = np.frombuffer(points_bytes, dtype=np.float32).reshape(
