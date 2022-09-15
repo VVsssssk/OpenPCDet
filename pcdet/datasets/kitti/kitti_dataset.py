@@ -12,12 +12,10 @@ from ..dataset import DatasetTemplate
 file_client_args = dict(
     backend='petrel',
     path_mapping=dict({
-        './data/kitti/':
+        '../data/kitti/':
         's3://openmmlab/datasets/detection3d/kitti/',
         'data/kitti/':
         's3://openmmlab/datasets/detection3d/kitti/',
-        '../data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
     }))
 class KittiDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None):
