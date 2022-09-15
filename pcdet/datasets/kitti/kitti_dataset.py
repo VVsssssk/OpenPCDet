@@ -133,9 +133,6 @@ class KittiDataset(DatasetTemplate):
 
     def get_road_plane(self, idx):
         plane_file = self.root_split_path / 'planes' / ('%s.txt' % idx)
-
-        with self.file_client.get(plane_file) as f:
-            lines = f.readlines()
         lines = self.file_client.get(plane_file).tobytes().decode().split('\n')
         lines = [float(i) for i in lines[3].split()]
         plane = np.asarray(lines)
