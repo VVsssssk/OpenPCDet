@@ -2,7 +2,7 @@ import numpy as np
 
 
 def get_calib_from_file(calib_file,file_client):
-    lines = file_client.get(calib_file).decode().split('\n')
+    lines = file_client.get(calib_file).tobytes().decode().split('\n')
     obj = lines[2].strip().split(' ')[1:]
     P2 = np.array(obj, dtype=np.float32)
     obj = lines[3].strip().split(' ')[1:]

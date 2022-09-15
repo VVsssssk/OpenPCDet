@@ -74,7 +74,7 @@ class KittiDataset(DatasetTemplate):
         # assert lidar_file.exists()
         # return np.fromfile(str(lidar_file), dtype=np.float32).reshape(-1, 4)
         try:
-            pts_bytes = self.file_client.get(pts_filename)
+            pts_bytes = self.file_client.get(pts_filename).tobytes()
             points = np.frombuffer(pts_bytes, dtype=np.float32)
         except ConnectionError:
             mmengine.check_file_exist(pts_filename)
@@ -138,6 +138,7 @@ class KittiDataset(DatasetTemplate):
 
         with self.file_client.get(plane_file) as f:
             lines = f.readlines()
+        lines = self.file_client.get(plane_file).tobytes().decode().split('\n')
         lines = [float(i) for i in lines[3].split()]
         plane = np.asarray(lines)
 
