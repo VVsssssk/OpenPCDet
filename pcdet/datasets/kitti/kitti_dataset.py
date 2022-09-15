@@ -3,13 +3,22 @@ import pickle
 
 import numpy as np
 from skimage import io
-
+import mmengine
 from . import kitti_utils
 from ...ops.roiaware_pool3d import roiaware_pool3d_utils
 from ...utils import box_utils, calibration_kitti, common_utils, object3d_kitti
 from ..dataset import DatasetTemplate
 
-
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        '../data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/'
+    }))
 class KittiDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None):
         """
@@ -28,7 +37,7 @@ class KittiDataset(DatasetTemplate):
 
         split_dir = self.root_path / 'ImageSets' / (self.split + '.txt')
         self.sample_id_list = [x.strip() for x in open(split_dir).readlines()] if split_dir.exists() else None
-
+        self.file_client = mmengine.FileClient(**file_client_args)
         self.kitti_infos = []
         self.include_kitti_data(self.mode)
 
@@ -62,8 +71,18 @@ class KittiDataset(DatasetTemplate):
 
     def get_lidar(self, idx):
         lidar_file = self.root_split_path / 'velodyne' / ('%s.bin' % idx)
-        assert lidar_file.exists()
-        return np.fromfile(str(lidar_file), dtype=np.float32).reshape(-1, 4)
+        # assert lidar_file.exists()
+        # return np.fromfile(str(lidar_file), dtype=np.float32).reshape(-1, 4)
+        try:
+            pts_bytes = self.file_client.get(pts_filename)
+            points = np.frombuffer(pts_bytes, dtype=np.float32)
+        except ConnectionError:
+            mmengine.check_file_exist(pts_filename)
+            if pts_filename.endswith('.npy'):
+                points = np.load(pts_filename)
+            else:
+                points = np.fromfile(pts_filename, dtype=np.float32)
+        return points.reshape(-1, 4)
 
     def get_image(self, idx):
         """
@@ -74,9 +93,11 @@ class KittiDataset(DatasetTemplate):
             image: (H, W, 3), RGB Image
         """
         img_file = self.root_split_path / 'image_2' / ('%s.png' % idx)
-        assert img_file.exists()
-        image = io.imread(img_file)
-        image = image.astype(np.float32)
+        try:
+            img_bytes = self.file_client.get(img_file)
+            img = np.frombuffer(pts_bytes, dtype=np.float32)
+        except ConnectionError:
+            mmengine.check_file_exist(img_file)
         image /= 255.0
         return image
 
@@ -88,7 +109,7 @@ class KittiDataset(DatasetTemplate):
     def get_label(self, idx):
         label_file = self.root_split_path / 'label_2' / ('%s.txt' % idx)
         assert label_file.exists()
-        return object3d_kitti.get_objects_from_label(label_file)
+        return object3d_kitti.get_objects_from_label(label_file,self.file_client)
 
     def get_depth_map(self, idx):
         """
@@ -107,15 +128,15 @@ class KittiDataset(DatasetTemplate):
 
     def get_calib(self, idx):
         calib_file = self.root_split_path / 'calib' / ('%s.txt' % idx)
-        assert calib_file.exists()
-        return calibration_kitti.Calibration(calib_file)
+        # assert calib_file.exists()
+        return calibration_kitti.Calibration(calib_file,self.file_client)
 
     def get_road_plane(self, idx):
         plane_file = self.root_split_path / 'planes' / ('%s.txt' % idx)
         if not plane_file.exists():
             return None
 
-        with open(plane_file, 'r') as f:
+        with self.file_client.get(plane_file) as f:
             lines = f.readlines()
         lines = [float(i) for i in lines[3].split()]
         plane = np.asarray(lines)
