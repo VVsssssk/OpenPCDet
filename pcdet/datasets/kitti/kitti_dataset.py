@@ -133,8 +133,6 @@ class KittiDataset(DatasetTemplate):
 
     def get_road_plane(self, idx):
         plane_file = self.root_split_path / 'planes' / ('%s.txt' % idx)
-        if not plane_file.exists():
-            return None
 
         with self.file_client.get(plane_file) as f:
             lines = f.readlines()
