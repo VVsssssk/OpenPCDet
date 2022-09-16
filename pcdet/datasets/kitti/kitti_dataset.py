@@ -74,6 +74,7 @@ class KittiDataset(DatasetTemplate):
         # assert lidar_file.exists()
         # return np.fromfile(str(lidar_file), dtype=np.float32).reshape(-1, 4)
         try:
+            assert self.file_client.exists(lidar_file)
             pts_bytes = self.file_client.get(lidar_file).tobytes()
             points = np.frombuffer(pts_bytes, dtype=np.float32)
         except ConnectionError:
@@ -94,6 +95,7 @@ class KittiDataset(DatasetTemplate):
         """
         img_file = self.root_split_path / 'image_2' / ('%s.png' % idx)
         try:
+            assert self.file_client.exists(img_file)
             img_bytes = self.file_client.get(img_file)
             img = np.frombuffer(pts_bytes, dtype=np.float32)
         except ConnectionError:
@@ -108,7 +110,6 @@ class KittiDataset(DatasetTemplate):
 
     def get_label(self, idx):
         label_file = self.root_split_path / 'label_2' / ('%s.txt' % idx)
-        assert label_file.exists()
         return object3d_kitti.get_objects_from_label(label_file,self.file_client)
 
     def get_depth_map(self, idx):

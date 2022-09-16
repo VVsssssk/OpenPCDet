@@ -2,6 +2,7 @@ import numpy as np
 
 
 def get_objects_from_label(label_file,file_client):
+    assert file_client.exists(label_file)
     lines = file_client.get(label_file).tobytes().decode().split('\n')
     objects = [Object3d(line) for line in lines]
     return objects
