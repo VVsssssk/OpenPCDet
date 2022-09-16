@@ -407,12 +407,12 @@ class DataBaseSampler(object):
                 points_bytes = self.fileclient.get(str(file_path))
                 obj_points = np.frombuffer(points_bytes, dtype=np.float32).reshape(
                     [-1, self.sampler_cfg.NUM_POINT_FEATURES]).copy()
-                if obj_points.shape[0] != info['num_points_in_gt']:
-                    points_bytes = self.fileclient.get(str(file_path))
-                    obj_points = np.frombuffer(points_bytes, dtype=np.float64).reshape(-1,
-                                                                                       self.sampler_cfg.NUM_POINT_FEATURES).copy()
+                # if obj_points.shape[0] != info['num_points_in_gt']:
+                #     points_bytes = self.fileclient.get(str(file_path))
+                #     obj_points = np.frombuffer(points_bytes, dtype=np.float64).reshape(-1,
+                #                                                                        self.sampler_cfg.NUM_POINT_FEATURES).copy()
             # assert obj_points.shape[0] == info['num_points_in_gt']
-            print(obj_points.shape[0],info['num_points_in_gt'],obj_points.shape[0] == info['num_points_in_gt'])
+            print(obj_points.shape,info['num_points_in_gt'],obj_points.shape[0] == info['num_points_in_gt'])
             obj_points[:, :3] += info['box3d_lidar'][:3].astype(np.float32)
 
             if self.sampler_cfg.get('USE_ROAD_PLANE', False):
