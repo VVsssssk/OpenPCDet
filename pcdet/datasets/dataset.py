@@ -163,6 +163,7 @@ class DatasetTemplate(torch_data.Dataset):
                     'gt_boxes_mask': gt_boxes_mask
                 }
             )
+            print('self.data_augmentor.forward')
             if 'calib' in data_dict:
                 data_dict['calib'] = calib
         if data_dict.get('gt_boxes', None) is not None:
@@ -182,7 +183,7 @@ class DatasetTemplate(torch_data.Dataset):
         data_dict = self.data_processor.forward(
             data_dict=data_dict
         )
-
+        print('data_dict = self.data_processor.forward')
         if self.training and len(data_dict['gt_boxes']) == 0:
             new_index = np.random.randint(self.__len__())
             return self.__getitem__(new_index)
